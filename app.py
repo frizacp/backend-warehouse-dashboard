@@ -18,14 +18,14 @@ app = Flask(__name__)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-db_config = {
+db_config2 = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
     'database': 'db_warehouse'
 }
 
-db_config2 = {
+db_config = {
     'host': 'localhost',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
