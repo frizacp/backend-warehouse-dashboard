@@ -105,7 +105,8 @@ def getselling():
             penjualan.status_bayar,
             penjualan.tanggal,
             penjualan.toko,
-            product.article
+            product.article,
+            product.size
 
         FROM 
             penjualan
