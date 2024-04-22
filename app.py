@@ -28,7 +28,7 @@ db_config2 = {
 db_config = {
     'host': 'localhost',
     'user': 'n1477318_admincapitols',
-    'password': 'Cuanterus123!',
+    'password': 'Ohno210500!',
     'database': 'n1477318_db_warehouse'
 }
 
