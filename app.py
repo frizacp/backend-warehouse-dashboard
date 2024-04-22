@@ -18,14 +18,14 @@ app = Flask(__name__)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-db_config2 = {
+db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
     'database': 'db_warehouse'
 }
 
-db_config = {
+db_config2 = {
     'host': 'localhost',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -58,6 +58,59 @@ def getproduct():
             product
         LEFT JOIN 
             alarm ON product.id = alarm.id;
+        '''
+
+        cursor.execute(query)
+
+        # Mengambil semua hasil query
+        results = cursor.fetchall()
+
+        # Menutup kursor dan koneksi
+        cursor.close()
+        connection.close()
+        now = datetime.now()
+        dt = now.strftime("%H:%M:%S")
+
+        return jsonify({'status': 'success', 'data': results,'date':dt})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/getselling', methods=['GET'])
+def getselling():
+    global db_config
+    try:
+        # Membuat koneksi ke database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        query = '''
+        SELECT 
+            penjualan.id,
+            penjualan.admin,
+            penjualan.asal,
+            penjualan.bukti_tf,
+            penjualan.code,
+            penjualan.ekspedisi,
+            penjualan.file,
+            penjualan.harga,
+            penjualan.jenis_pengiriman,
+            penjualan.jenis_produk,
+            penjualan.kode_invoice,
+            penjualan.media,
+            penjualan.note,
+            penjualan.ongkir,
+            penjualan.penerima,
+            penjualan.qty,
+            penjualan.rekening,
+            penjualan.status_bayar,
+            penjualan.tanggal,
+            penjualan.toko,
+            product.article
+
+        FROM 
+            penjualan
+        LEFT JOIN 
+            product ON penjualan.code = product.code;
         '''
 
         cursor.execute(query)
