@@ -157,7 +157,7 @@ def upload_file():
 # Membaca file Excel menggunakan pandas
     try:
         df = pd.read_excel(f'{file_path}')
-        df['qty'] = df['qty'].fillna(0)
+        df['qty'] = (df['qty'].fillna(0)).astype(int)
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
         cursor.execute("DELETE FROM product")
@@ -207,7 +207,8 @@ def upload_alarm():
 # Membaca file Excel menggunakan pandas
     try:
         df = pd.read_excel(f'{file_path}')
-        df = df.dropna(axis='qty_alarm')
+        df =df.dropna(subset=['qty_alarm'])
+        df['qty_alarm'] = df['qty_alarm'].astype(int)
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
         cursor.execute("DELETE FROM alarm")
