@@ -27,6 +27,13 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
+db_config2 = {
+    'host': '109.106.252.55',
+    'user': 'n1477318_admincapitols',
+    'password': 'Ohno210500!',
+    'database': 'n1477318_db_warehouse'
+}
+
 db_config = {
     'host': 'localhost',
     'user': 'n1477318_admincapitols',
@@ -135,64 +142,59 @@ def getselling():
 def downloadproduct():
     global db_config
     type = request.args.get('type')
-
     try:
         # Membuat koneksi ke database
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
-        query_full = '''
-            SELECT product.id, product.code,product.id_category, product.article, product.size, product.qty, alarm.qty_alarm
-FROM product
-LEFT JOIN alarm ON product.id = alarm.id
-        '''
-        query_stock_only = '''
-            SELECT id, code,id_category, article, size, qty FROM product
-        '''
-        query_alarm_only = '''
-            SELECT product.id, product.code,product.id_category ,product.article, product.size, alarm.qty_alarm
-FROM product
-LEFT JOIN alarm ON product.id = alarm.id
-        '''
 
         if type == 'full':
-            cursor.execute(query_full)
+            query = '''
+                SELECT product.id, product.code, product.id_category, product.article, product.size, product.qty, alarm.qty_alarm
+                FROM product
+                LEFT JOIN alarm ON product.id = alarm.id
+            '''
             f_name = 'product_full'
         elif type == 'stock':
-            cursor.execute(query_stock_only)
+            query = '''
+                SELECT id, code, id_category, article, size, qty
+                FROM product
+            '''
             f_name = 'product_stock'
         elif type == 'alarm':
-            cursor.execute(query_alarm_only)
+            query = '''
+                SELECT product.id, product.code, product.id_category, product.article, product.size, alarm.qty_alarm
+                FROM product
+                LEFT JOIN alarm ON product.id = alarm.id
+            '''
             f_name = 'product_alarm'
+        else:
+            return "Invalid type specified", 400
 
-        # Mengambil semua hasil query sebagai DataFrame menggunakan pandas
+        cursor.execute(query)
+
+        # Membuat DataFrame langsung dari hasil query
         df = pd.DataFrame(cursor.fetchall())
 
         # Menutup kursor dan koneksi
         cursor.close()
         connection.close()
 
-        # Menghasilkan file Excel menggunakan pandas dan xlsxwriter
-        output = io.BytesIO()
-        writer = pd.ExcelWriter(output, engine='xlsxwriter')
-        df.to_excel(writer, sheet_name='Products', index=False)
-
-        # Menambahkan informasi waktu unduh
+        # Menentukan nama file
         now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f'{f_name}_{now}.xlsx'
-        writer.close()
+        filename = f'download/{f_name}_{now}.xlsx'
 
-        # Mengatur posisi byte di awal file
-        output.seek(0)
+        # Menyimpan DataFrame ke file Excel dan mengirimkan sebagai response
+        df.to_excel(filename, index=False)
 
         return send_file(
-            output,
+            filename,
             download_name=filename,
             as_attachment=True,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
 
     except Exception as e:
-        return str(e), 500  # atau sesuaikan dengan kode status yang sesuai
+        return str(e), 500
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
