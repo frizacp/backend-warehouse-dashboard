@@ -398,7 +398,44 @@ def getalarm():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
     
+@app.route('/getcapacity', methods=['GET'])
+def getcapacity():
+    global db_config
+    try:
+        # Membuat koneksi ke database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
 
+        query = '''
+            SELECT capacity FROM `warehuse_capacity` WHERE id = 1
+        '''
+
+        cursor.execute(query)
+        max_capacity = cursor.fetchall()
+
+        query = '''
+            SELECT SUM(qty) AS total_qty FROM product;
+        '''
+
+        cursor.execute(query)
+        total_qty = cursor.fetchall()
+
+
+        cursor.close()
+        connection.close()
+
+        result = {
+            'max_cap':max_capacity[0]['capacity'],
+            'total_qty':int(total_qty[0]['total_qty'])
+        }
+
+
+        now = datetime.now()
+        dt = now.strftime("%H:%M:%S")
+
+        return jsonify({'status': 'success', 'data': result,'date':dt})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)
