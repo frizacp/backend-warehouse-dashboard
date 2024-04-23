@@ -3,7 +3,7 @@ from flask import Flask
 from flask import json
 from flask import request
 from flask_cors import CORS
-from datetime import date
+from datetime import date, datetime, timedelta
 import mysql.connector
 from datetime import datetime
 import pandas as pd
@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-db_config2 = {
+db_config_2 = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
@@ -298,6 +298,106 @@ def dropproduct():
     cursor.close()
     connection.close()
     return 'Data Delete successfully', 200
+
+@app.route('/getarticlemonth', methods=['GET'])
+def getarticlemonth():
+    global db_config
+    days_count = int(request.args.get('days'))
+    try:
+        # Membuat koneksi ke database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        query = '''
+        SELECT 
+            penjualan.qty,
+            penjualan.tanggal,
+            product.article
+
+        FROM 
+            penjualan
+        LEFT JOIN 
+            product ON penjualan.code = product.code;
+        '''
+
+        cursor.execute(query)
+
+        # Mengambil semua hasil query
+        df = pd.DataFrame(cursor.fetchall())
+
+        # Menutup kursor dan koneksi
+        cursor.close()
+        connection.close()
+        df['tanggal'] = pd.to_datetime(df['tanggal'])
+
+        # Hitung tanggal hari ini dan 30 hari sebelumnya
+        today = pd.Timestamp.now().normalize()  # Mendapatkan tanggal hari ini
+        thirty_days_ago = today - pd.Timedelta(days=days_count)  # Mendapatkan tanggal 30 hari sebelumnya
+
+        # Filter DataFrame berdasarkan rentang tanggal
+        filtered_df = df[(df['tanggal'] >= thirty_days_ago) & (df['tanggal'] <= today)]
+
+        filtered_df = df[(df['tanggal'] >= thirty_days_ago) & (df['tanggal'] <= today)]
+        filtered_df
+        sum_qty_per_barang = filtered_df.groupby('article')['qty'].sum().reset_index()
+        sum_qty_per_barang = sum_qty_per_barang.to_dict(orient='records')
+
+
+        now = datetime.now()
+        dt = now.strftime("%H:%M:%S")
+
+        return jsonify({'status': 'success', 'data': sum_qty_per_barang,'date':dt})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/getalarm', methods=['GET'])
+def getalarm():
+    global db_config
+    count_qty = int(request.args.get('count'))
+    try:
+        # Membuat koneksi ke database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        query = '''
+            SELECT 
+            product.id, 
+            product.article, 
+            product.qty, 
+            alarm.qty_alarm
+        FROM 
+            product
+        LEFT JOIN 
+            alarm ON product.id = alarm.id;
+        '''
+
+        cursor.execute(query)
+
+        # Mengambil semua hasil query
+        df = pd.DataFrame(cursor.fetchall())
+        df['qty_alarm'] = (df['qty_alarm'].fillna(0)).astype(int)
+        df['qty'] = (df['qty'].fillna(0)).astype(int)
+        df1 = df.groupby('article')['qty'].sum().reset_index()
+        df2 = df.groupby('article')['qty_alarm'].sum().reset_index()
+        result = pd.merge(df1,df2,on='article',how='left')
+        # Menutup kursor dan koneksi
+        cursor.close()
+        connection.close()
+        result['selisih'] = result['qty'] / result['qty_alarm']
+        result = result.sort_values(by='selisih', ascending=True).reset_index()
+        result['id'] = result.index + 1
+        result = result[['id','article','qty','qty_alarm','selisih']]
+        result = result.head(int(count_qty))
+        result= result.to_dict(orient='records')
+
+
+        now = datetime.now()
+        dt = now.strftime("%H:%M:%S")
+
+        return jsonify({'status': 'success', 'data': result,'date':dt})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+    
 
 
 if __name__ == '__main__':
