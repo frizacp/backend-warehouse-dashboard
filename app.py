@@ -11,6 +11,8 @@ from flask import send_file
 from datetime import datetime
 import io
 import xlsxwriter
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 
 
@@ -438,4 +440,4 @@ def getcapacity():
         return jsonify({'status': 'error', 'message': str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
