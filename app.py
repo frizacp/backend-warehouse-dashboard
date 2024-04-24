@@ -27,7 +27,7 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config2 = {
+db_config3 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -81,6 +81,46 @@ def getproduct():
         dt = now.strftime("%H:%M:%S")
 
         return jsonify({'status': 'success', 'data': results,'date':dt})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+    
+@app.route('/getproductwp', methods=['GET'])
+def getproductwp():
+    global db_config
+    try:
+        # Membuat koneksi ke database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        query = '''
+            SELECT 
+            product.id, 
+            product.code, 
+            product.article, 
+            product.size, 
+            product.qty, 
+            alarm.qty_alarm,
+            CASE
+                WHEN product.qty < alarm.qty_alarm THEN 'PERLU RESTOCK'
+                WHEN product.qty >= alarm.qty_alarm THEN 'AMAN'
+                ELSE 'unknown'
+            END AS alarm_status
+        FROM 
+            product
+        LEFT JOIN 
+            alarm ON product.id = alarm.id;
+        '''
+
+        cursor.execute(query)
+
+        # Mengambil semua hasil query
+        results = cursor.fetchall()
+
+        # Menutup kursor dan koneksi
+        cursor.close()
+        connection.close()
+
+        return jsonify(results)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
