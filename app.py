@@ -27,7 +27,7 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config3 = {
+db_config4 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -108,7 +108,9 @@ def getproductwp():
         FROM 
             product
         LEFT JOIN 
-            alarm ON product.id = alarm.id;
+            alarm ON product.id = alarm.id
+        WHERE 
+            product.qty > 0;
         '''
 
         cursor.execute(query)
