@@ -27,7 +27,7 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config4 = {
+db_config2 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -443,7 +443,62 @@ def getalarm():
         return jsonify({'status': 'success', 'data': result,'date':dt})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
-    
+
+
+@app.route('/downloadalarm', methods=['GET'])
+def download():
+    global db_config
+    try:
+        # Membuat koneksi ke database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        query = '''
+            SELECT 
+            product.id, 
+            product.article, 
+            product.qty, 
+            alarm.qty_alarm
+        FROM 
+            product
+        LEFT JOIN 
+            alarm ON product.id = alarm.id;
+        '''
+
+        cursor.execute(query)
+
+        # Mengambil semua hasil query
+        df = pd.DataFrame(cursor.fetchall())
+        df['qty_alarm'] = (df['qty_alarm'].fillna(0)).astype(int)
+        df['qty'] = (df['qty'].fillna(0)).astype(int)
+        df1 = df.groupby('article')['qty'].sum().reset_index()
+        df2 = df.groupby('article')['qty_alarm'].sum().reset_index()
+        result = pd.merge(df1,df2,on='article',how='left')
+        # Menutup kursor dan koneksi
+        cursor.close()
+        connection.close()
+        result['selisih'] = result['qty'] / result['qty_alarm']
+        result.loc[result['qty'] <= result['qty_alarm'], 'alarm_status'] = 'Perlu Restock'
+        result.loc[result['qty'] > result['qty_alarm'], 'alarm_status'] = 'Aman'
+        result = result.sort_values(by='selisih', ascending=True).reset_index()
+        result['id'] = result.index + 1
+        result = result[['id','article','qty','qty_alarm','selisih','alarm_status']]
+        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f'download/alarmfull_{now}.xlsx'
+
+        # Menyimpan DataFrame ke file Excel dan mengirimkan sebagai response
+        result.to_excel(filename, index=False)
+
+        return send_file(
+            filename,
+            download_name=filename,
+            as_attachment=True,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+    except Exception as e:
+        return str(e), 500
+
 @app.route('/getcapacity', methods=['GET'])
 def getcapacity():
     global db_config
