@@ -120,7 +120,7 @@ def getproductwp():
         cursor.close()
         connection.close()
 
-        return jsonify({results})
+        return jsonify(results)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
