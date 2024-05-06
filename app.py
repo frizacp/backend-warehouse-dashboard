@@ -108,9 +108,7 @@ def getproductwp():
         FROM 
             product
         LEFT JOIN 
-            alarm ON product.id = alarm.id
-        WHERE 
-            product.qty > 0;
+            alarm ON product.id = alarm.id;
         '''
 
         cursor.execute(query)
@@ -122,7 +120,7 @@ def getproductwp():
         cursor.close()
         connection.close()
 
-        return jsonify(results)
+        return jsonify({results})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
