@@ -89,29 +89,32 @@ def getproductwp():
     global db_config
     try:
         # Membuat koneksi ke database
+        warehouse = request.args.get('warehouse')
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
         query = '''
             SELECT 
-            product.id, 
-            product.code, 
-            product.article, 
-            product.size, 
-            product.qty, 
-            alarm.qty_alarm,
-            CASE
-                WHEN product.qty < alarm.qty_alarm THEN 'PERLU RESTOCK'
-                WHEN product.qty >= alarm.qty_alarm THEN 'AMAN'
-                ELSE 'unknown'
-            END AS alarm_status
-        FROM 
-            product
-        LEFT JOIN 
-            alarm ON product.id = alarm.id;
+                product.id, 
+                product.code, 
+                product.article, 
+                product.size, 
+                product.qty, 
+                alarm.qty_alarm,
+                CASE
+                    WHEN product.qty < alarm.qty_alarm THEN 'PERLU RESTOCK'
+                    WHEN product.qty >= alarm.qty_alarm THEN 'AMAN'
+                    ELSE 'unknown'
+                END AS alarm_status
+            FROM 
+                product
+            LEFT JOIN 
+                alarm ON product.id = alarm.id
+            WHERE product.id_category = %s
         '''
 
-        cursor.execute(query)
+        # Execute the query with the parameter
+        cursor.execute(query, (warehouse,))
 
         # Mengambil semua hasil query
         results = cursor.fetchall()
