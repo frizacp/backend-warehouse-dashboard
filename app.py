@@ -110,7 +110,8 @@ def getproductwp():
                 product
             LEFT JOIN 
                 alarm ON product.id = alarm.id
-            WHERE product.id_category = %s
+            WHERE product.id_category = %s AND
+            product.qty != 0
         '''
 
         # Execute the query with the parameter
