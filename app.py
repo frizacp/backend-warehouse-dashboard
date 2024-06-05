@@ -27,14 +27,14 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config2 = {
+db_config = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
     'database': 'n1477318_db_warehouse'
 }
 
-db_config = {
+db_config3 = {
     'host': 'localhost',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -111,7 +111,7 @@ def getproductwp():
             LEFT JOIN 
                 alarm ON product.id = alarm.id
             WHERE product.id_category = %s AND
-            product.qty != 0
+            product.qty > 0
         '''
 
         # Execute the query with the parameter
