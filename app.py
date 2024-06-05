@@ -27,14 +27,14 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config = {
+db_config2 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
     'database': 'n1477318_db_warehouse'
 }
 
-db_config3 = {
+db_config = {
     'host': 'localhost',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
