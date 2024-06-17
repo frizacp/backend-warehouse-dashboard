@@ -27,7 +27,7 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config3 = {
+db_config4 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -559,6 +559,33 @@ def sysstatus():
     
     return jsonify({'message': 'Data received successfully', 'status':'success','SystemStatus':system_status})
 
+@app.route('/toggle_sysstatus', methods=['POST'])
+def toggle_sysstatus():
+    global db_config
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        
+        # Mendapatkan status sistem saat ini
+        query = '''SELECT OPTIONS, VALUE FROM `system` WHERE options = "system_status" '''
+        cursor.execute(query)
+        system_status = cursor.fetchall()
+        current_status = int(system_status[0]['VALUE'])
+        
+        # Mengubah status
+        new_status = 1 if current_status == 0 else 0
+        
+        # Memperbarui status di database
+        update_query = '''UPDATE `system` SET VALUE = %s WHERE options = "system_status" '''
+        cursor.execute(update_query, (new_status,))
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        return jsonify({'message': str(e), 'status': 'failed'})
+    
+    return jsonify({'message': 'System status updated successfully', 'status': 'success', 'NewSystemStatus': new_status})
 
 if __name__ == '__main__':
     app.run(debug=False)
