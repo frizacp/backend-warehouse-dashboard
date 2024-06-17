@@ -25,14 +25,14 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config2 = {
+db_config = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
     'database': 'n1477318_db_warehouse'
 }
 
-db_config = {
+db_config3 = {
     'host': 'localhost',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -446,7 +446,7 @@ def getalarm():
 
 
 @app.route('/downloadalarm', methods=['GET'])
-def download():
+def downloadalarm():
     global db_config
     try:
         # Membuat koneksi ke database
@@ -488,6 +488,64 @@ def download():
 
         # Menyimpan DataFrame ke file Excel dan mengirimkan sebagai response
         result.to_excel(filename, index=False)
+
+        return send_file(
+            filename,
+            download_name=filename,
+            as_attachment=True,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+    except Exception as e:
+        return str(e), 500
+    
+@app.route('/downloadbestproduct', methods=['GET'])
+def downloadbestproduct():
+    global db_config
+    days_count = int(request.args.get('days'))
+    try:
+        # Membuat koneksi ke database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        query = '''
+        SELECT 
+            penjualan.qty,
+            penjualan.tanggal,
+            product.article
+
+        FROM 
+            penjualan
+        LEFT JOIN 
+            product ON penjualan.code = product.code;
+        '''
+
+        cursor.execute(query)
+
+        # Mengambil semua hasil query
+        df = pd.DataFrame(cursor.fetchall())
+
+        # Menutup kursor dan koneksi
+        cursor.close()
+        connection.close()
+        df['tanggal'] = pd.to_datetime(df['tanggal'])
+
+        # Hitung tanggal hari ini dan 30 hari sebelumnya
+        today = pd.Timestamp.now().normalize()  # Mendapatkan tanggal hari ini
+        thirty_days_ago = today - pd.Timedelta(days=days_count)  # Mendapatkan tanggal 30 hari sebelumnya
+
+        # Filter DataFrame berdasarkan rentang tanggal
+        filtered_df = df[(df['tanggal'] >= thirty_days_ago) & (df['tanggal'] <= today)]
+
+        filtered_df = df[(df['tanggal'] >= thirty_days_ago) & (df['tanggal'] <= today)]
+        filtered_df
+        sum_qty_per_barang = filtered_df.groupby('article')['qty'].sum().reset_index()
+        sum_qty_per_barang = sum_qty_per_barang.sort_values(by='qty', ascending=False)
+        now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f'download/Best_Produk_{now}.xlsx'
+
+        # Menyimpan DataFrame ke file Excel dan mengirimkan sebagai response
+        sum_qty_per_barang.to_excel(filename, index=False)
 
         return send_file(
             filename,
