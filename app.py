@@ -27,7 +27,7 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config2 = {
+db_config3 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -539,6 +539,26 @@ def getcapacity():
         return jsonify({'status': 'success', 'data': result,'date':dt})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/sysstatus', methods=['GET'])
+def sysstatus():
+    #CARI SISTEM STATUS
+    global db_config
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        query = '''SELECT OPTIONS, VALUE FROM `system` WHERE options = "system_status" '''
+        cursor.execute(query)
+        # Mengambil semua hasil query
+        system_status = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        system_status = system_status[0]['VALUE']
+    except Exception as e:
+        return jsonify({'message': str(e), 'status':'failed'})
+    
+    return jsonify({'message': 'Data received successfully', 'status':'success','SystemStatus':system_status})
+
 
 if __name__ == '__main__':
     app.run(debug=False)
