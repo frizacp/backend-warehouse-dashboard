@@ -1,16 +1,14 @@
 from flask import jsonify
 from flask import Flask
-from flask import json
 from flask import request
 from flask_cors import CORS
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import mysql.connector
 from datetime import datetime
 import pandas as pd
 from flask import send_file
 from datetime import datetime
 import io
-import xlsxwriter
 import os
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
@@ -27,7 +25,7 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config4 = {
+db_config2 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -509,34 +507,18 @@ def getcapacity():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        query = '''
-            SELECT capacity FROM `warehuse_capacity` WHERE id = 1
-        '''
+        query = '''SELECT product.id_category, CAST(SUM(product.qty) AS INT) AS total_qty, category.capacity, category.category FROM product LEFT JOIN category ON product.id_category = category.id GROUP BY product.id_category, category.capacity, category.category;'''
 
         cursor.execute(query)
-        max_capacity = cursor.fetchall()
-
-        query = '''
-            SELECT SUM(qty) AS total_qty FROM product;
-        '''
-
-        cursor.execute(query)
-        total_qty = cursor.fetchall()
-
+        response = cursor.fetchall()
 
         cursor.close()
         connection.close()
 
-        result = {
-            'max_cap':max_capacity[0]['capacity'],
-            'total_qty':int(total_qty[0]['total_qty'])
-        }
-
-
         now = datetime.now()
         dt = now.strftime("%H:%M:%S")
 
-        return jsonify({'status': 'success', 'data': result,'date':dt})
+        return jsonify({'status': 'success', 'data': response,'date':dt})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
