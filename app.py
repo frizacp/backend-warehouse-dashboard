@@ -2,7 +2,8 @@ from flask import jsonify
 from flask import Flask
 from flask import request
 from flask_cors import CORS
-from datetime import datetime, timedelta
+from datetime import datetime
+import json
 import mysql.connector
 from datetime import datetime
 import pandas as pd
@@ -25,7 +26,7 @@ db_config_2 = {
     'database': 'db_warehouse'
 }
 
-db_config0 = {
+db_config2 = {
     'host': '109.106.252.55',
     'user': 'n1477318_admincapitols',
     'password': 'Ohno210500!',
@@ -85,46 +86,55 @@ def getproduct():
 @app.route('/getproductwp', methods=['GET'])
 def getproductwp():
     global db_config
-    try:
-        # Membuat koneksi ke database
-        warehouse = request.args.get('warehouse')
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor(dictionary=True)
+    warehouse = request.args.get('warehouse')
+    
+    if warehouse != "99":
+        try:
+            # Membuat koneksi ke database
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
 
-        query = '''
-            SELECT 
-                product.id, 
-                product.code, 
-                product.article, 
-                product.size, 
-                product.qty, 
-                alarm.qty_alarm,
-                CASE
-                    WHEN product.qty < alarm.qty_alarm THEN 'PERLU RESTOCK'
-                    WHEN product.qty >= alarm.qty_alarm THEN 'AMAN'
-                    ELSE 'unknown'
-                END AS alarm_status
-            FROM 
-                product
-            LEFT JOIN 
-                alarm ON product.id = alarm.id
-            WHERE product.id_category = %s AND
-            product.qty > 0
-        '''
+            query = '''
+                SELECT 
+                    product.id, 
+                    product.code, 
+                    product.article, 
+                    product.size, 
+                    product.qty, 
+                    alarm.qty_alarm,
+                    CASE
+                        WHEN product.qty < alarm.qty_alarm THEN 'PERLU RESTOCK'
+                        WHEN product.qty >= alarm.qty_alarm THEN 'AMAN'
+                        ELSE 'unknown'
+                    END AS alarm_status
+                FROM 
+                    product
+                LEFT JOIN 
+                    alarm ON product.id = alarm.id
+                WHERE product.id_category = %s AND
+                product.qty > 0
+            '''
 
-        # Execute the query with the parameter
-        cursor.execute(query, (warehouse,))
+            # Execute the query with the parameter
+            cursor.execute(query, (warehouse,))
 
-        # Mengambil semua hasil query
-        results = cursor.fetchall()
+            # Mengambil semua hasil query
+            results = cursor.fetchall()
 
-        # Menutup kursor dan koneksi
-        cursor.close()
-        connection.close()
+            # Menutup kursor dan koneksi
+            cursor.close()
+            connection.close()
 
-        return jsonify(results)
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+            return jsonify(results)
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)})
+    else:
+        try:
+            with open('data_dummy_cinere.json', 'r') as file:
+                results = json.load(file)
+        except Exception as e:
+            return jsonify({'message': str(e), 'status': 'failed'})
+        return jsonify(results['cinere'])
 
 @app.route('/getselling', methods=['GET'])
 def getselling():
